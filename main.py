@@ -45,9 +45,6 @@ def main(args: argparse.Namespace):
 
     progress = tqdm(videos := sorted(video_dir.glob(f'*{args.ext}')))
     for video in progress:
-        if video.stem != 'KakaoTalk_20211124_171806444':
-            continue
-
         progress.set_description(f'{video.stem}')
         gt_count = gt.get(video.stem, 0)
 
@@ -181,7 +178,7 @@ def main(args: argparse.Namespace):
             base_dir=dump_analysis_dir,
             cluster_distance_threshold=args.cluster_distance_threshold,
             cluster_time_threshold=int((fps * args.cluster_time_threshold) / (args.step * args.refine_step)),
-            cluster_count_threshold=args.cluster_count_threshold,
+            cluster_outlier_threshold=args.cluster_outlier_threshold,
             interaction_step=args.interaction_step,
             interaction_distance_threshold=args.interaction_distance_threshold,
             analysis_best_count=args.analysis_best_count,
@@ -212,8 +209,8 @@ if __name__ == "__main__":
     parser.add_argument('--step', type=int, default=2)
     parser.add_argument('--refine-step', type=int, default=4)
 
-    parser.add_argument('--cluster-distance-threshold', type=float, default=285,
-                        help="cluster minimum distance (800 is 100%, default=285)")
+    parser.add_argument('--cluster-distance-threshold', type=float, default=300,
+                        help="cluster minimum distance (800 is 100%, default=300)")
     parser.add_argument('--cluster-time-threshold', type=float, default=10.,
                         help="cluster minimum time (seconds)")
     parser.add_argument('--cluster-outlier-threshold', type=int, default=5,

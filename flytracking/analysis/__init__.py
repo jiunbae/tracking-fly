@@ -20,7 +20,7 @@ class Analysis:
         base_dir: typing.Union[str, Path],
         cluster_distance_threshold: float,
         cluster_time_threshold: float,
-        cluster_count_threshold: int,
+        cluster_outlier_threshold: int,
         interaction_step: int,
         interaction_distance_threshold: float,
         analysis_best_count: int,
@@ -46,7 +46,7 @@ class Analysis:
 
         self.cluster_distance_threshold = cluster_distance_threshold
         self.cluster_time_threshold = cluster_time_threshold
-        self.cluster_count_threshold = cluster_count_threshold
+        self.cluster_outlier_threshold = cluster_outlier_threshold
         self.interaction_step = int(interaction_step * fps / step)
         self.interaction_distance_threshold = interaction_distance_threshold
         self.analysis_best_count = analysis_best_count
@@ -106,8 +106,8 @@ class Analysis:
 
                 tar_centers = self.centers[:, begin_frame:end_frame, :]
                 cluster_dists = np.hypot(*(tar_centers.mean(axis=1) - tar_centers.mean(axis=(0, 1))).T)
-                exclude_id, *_ = np.where(cluster_dists > self.cluster_distance_threshold * .8)
-                if len(exclude_id) < self.cluster_count_threshold:
+                exclude_id, *_ = np.where(cluster_dists > self.cluster_distance_threshold * .7)
+                if len(exclude_id) < self.cluster_outlier_threshold:
                     yield begin_frame, end_frame, exclude_id
 
     def dump_cluster(self):
@@ -173,6 +173,7 @@ class Analysis:
             distance_dfs.append(distance_df)
 
         *clusters, exc_ids = zip(*self.get_cluster())
+        clusters = tuple(zip(*clusters))
         clusters = np.array(clusters) if len(clusters) else np.empty((0, 2))
         clusters_to_frame = clusters * self.step
         clusters_to_frame_diff = np.diff(clusters_to_frame, axis=-1)
