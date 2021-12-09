@@ -20,7 +20,7 @@ from flytracking.analysis import Analysis, vis
 def main(args: argparse.Namespace):
     data_dir = Path(args.data)
     video_dir = data_dir.joinpath('video')
-    gt_file = Path(args.gt)
+    gt_file = data_dir.joinpath(Path(args.gt))
 
     dump_image_base_dir = data_dir.joinpath('images')
     dump_image_base_dir.mkdir(exist_ok=True, parents=True)
@@ -43,7 +43,7 @@ def main(args: argparse.Namespace):
         with gt_file.open() as f:
             gt = json.load(f)
 
-    progress = tqdm(videos := sorted(video_dir.glob('*.mp4')))
+    progress = tqdm(videos := sorted(video_dir.glob(f'*{args.ext}')))
     for video in progress:
         if video.stem != 'KakaoTalk_20211124_171806444':
             continue
@@ -202,8 +202,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--data', type=str, default='./data',
                         help="Path to dataset directory")
+    parser.add_argument('--ext', type=str, default='.mp4')
     parser.add_argument('--skip', type=float, default=60.,
-                        help="Skip first {skip} frames")
+                        help="Skip first {skip} frames (seconds)")
 
     parser.add_argument('--width', type=int, default=800)
     parser.add_argument('--height', type=int, default=800)
@@ -238,7 +239,7 @@ if __name__ == "__main__":
     parser.add_argument('--batch', type=int, default=2)
     parser.add_argument('--weights', type=str, default='weights/efficientdet-d4.pth')
     parser.add_argument('--compound-coefficient', type=int, default=4)
-    parser.add_argument('--gt', type=str, default='./data/video/gt_count.json')
+    parser.add_argument('--gt', type=str, default='video/gt_count.json')
 
     parser.add_argument('--init-frame', type=int, default=100,
                         help="Tracker initialize frame")
