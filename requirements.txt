@@ -1,0 +1,5 @@
+kaleido
+plotly
+numpy
+pandas
+opencv-python

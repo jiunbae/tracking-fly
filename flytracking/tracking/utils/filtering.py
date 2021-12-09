@@ -16,9 +16,9 @@ def processing(image: np.ndarray, boxes: np.ndarray) \
 def is_bg(image: np.ndarray, boxes: np.ndarray) \
         -> np.ndarray:
     image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    
+
     crops = [
-        image[int(y1):int(y2), int(x1):int(x2)].std() < 33
+        image[int(y1):int(y2), int(x1):int(x2)].std() < 30 and acc < .5
         for x1, y1, x2, y2, acc in boxes
     ]
 
@@ -31,11 +31,20 @@ def refine(
     tracks: typing.List[typing.Dict[str, typing.Any]],
     gt_count: int = 0,
     step: int = 1,
+    total: int = 100,
 ) -> np.ndarray:
     if gt_count != 0:
-        assert len(tracks) == gt_count
-    tracks = tuple(map(itemgetter('bboxes'), tracks))
+        if len(tracks) != gt_count:
+            Warning(f"{len(tracks)} {gt_count} mismatch")
 
-    assert all(len(track) == len(tracks[0]) for track in tracks)
+    for track in tracks:
+        if len(track['bboxes']) != total:
+            first_frame = track['bboxes'][0]
+            track['bboxes'] = np.concatenate((
+                np.repeat(first_frame, total - len(track['bboxes']), axis=0).reshape(-1, 4),
+                track['bboxes']
+            ))
 
-    return np.stack(tracks)[:, ::step, :]
+    track_boxes = tuple(map(itemgetter('bboxes'), tracks))
+
+    return np.stack(track_boxes)[:, ::step, :]

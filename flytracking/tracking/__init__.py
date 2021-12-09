@@ -9,11 +9,12 @@ import numpy as np
 
 class Tracker:
     def __init__(
-        self,
-        gt_count: int = 0,
-        center: typing.Tuple[int, int] = (400, 400),
-        sigma_l: float = .05, sigma_h: float = .75,
-        sigma_iou: float = .35, t_min: int = 10,
+            self,
+            gt_count: int = 0,
+            center: typing.Tuple[int, int] = (400, 400),
+            sigma_l: float = .05, sigma_h: float = .5,
+            sigma_iou: float = .35, t_min: int = 10,
+            init_idx: int = 100,
     ):
         self.gt_count = gt_count
         self.center = center
@@ -23,12 +24,14 @@ class Tracker:
         self.t_min = t_min
 
         self.frame_idx = -1
+        self.init_idx = init_idx
         self.tracks_active = []
         self.tracks_finished = []
-    
+        self.trusts = []
+
     def update(self, boxes: np.ndarray):
-        visit = np.zeros(len(boxes), dtype=bool)
-        updated_tracks, missing_tracks = [], []
+
+
 
         # calculate IoUs
         # if self.tracks_finished:
@@ -41,16 +44,6 @@ class Tracker:
 
         self.frame_idx += 1
         if not self.frame_idx:
-            if self.gt_count:
-                if len(boxes) < self.gt_count:
-                    print(f'Warning! gt count {self.gt_count} is lower than detection count {len(boxes)}')
-                max_distance = metric.distance((*self.center, *self.center), (0, 0, 0, 0))
-                distance_score = np.array([
-                    -(score + (1 - metric.distance((*self.center, *self.center), box) / max_distance))
-                    for *box, score in boxes
-                ])
-                boxes = boxes[distance_score.argsort()][:self.gt_count]
-
             self.tracks_active = [
                 {
                     "bboxes": [np.array(box)],
@@ -62,6 +55,52 @@ class Tracker:
             ]
             return
 
+        elif self.frame_idx < self.init_idx:
+            if len(boxes) == self.gt_count:
+                self.trusts.append(boxes.copy())
+
+        elif self.frame_idx == self.init_idx:
+            if self.gt_count:
+                if len(self.tracks_active) != self.gt_count:
+                    print(
+                        f'Warning! gt count {self.gt_count} is not matched tracking {len(self.tracks_active)}'
+                        'Use trust gt for initialization'
+                    )
+                    if len(boxes) > self.gt_count:
+                        max_distance = metric.distance((*self.center, *self.center), (0, 0, 0, 0))
+                        distance_score = np.array([
+                            -(score + (1 - metric.distance((*self.center, *self.center), box) / max_distance))
+                            for *box, score in boxes
+                        ])
+                        boxes = boxes[distance_score.argsort()][:self.gt_count]
+                    else:
+                        not_added_trust = []
+                        for trust in self.trusts:
+                            visit = np.zeros(len(boxes), dtype=bool)
+                            for track in self.tracks_active:
+                                not_visited_index, *_ = np.where(~visit)
+                                best_idx, best_iou, best_box = metric.get_best_match(
+                                    track['bboxes'][-1],
+                                    trust[not_visited_index, :4],
+                                )
+                                best_idx = not_visited_index[best_idx]
+                                visit[best_idx] = True
+                            not_visited_index, *_ = np.where(~visit)
+                            not_added_trust.append(not_visited_index)
+
+                        for *box, score in self.trusts[-1][not_added_trust[-1]]:
+                            self.tracks_active.append(
+                                {
+                                    "bboxes": [np.array(box)],
+                                    "max_score": score,
+                                    "start_frame": self.frame_idx,
+                                    "lost": [-1],
+                                    "skip": False,
+                                }
+                            )
+
+        updated_tracks, missing_tracks = [], []
+        visit = np.zeros(len(boxes), dtype=bool)
         for track in self.tracks_active:
             best_idx, best_iou, best_box = 0, 0, 0
             if visit.sum() < len(boxes):
