@@ -105,10 +105,20 @@ class Analysis:
                 begin_frame, end_frame = filtered[begin], filtered[end]
 
                 tar_centers = self.centers[:, begin_frame:end_frame, :]
-                cluster_dists = np.hypot(*(tar_centers.mean(axis=1) - tar_centers.mean(axis=(0, 1))).T)
-                exclude_id, *_ = np.where(cluster_dists > self.cluster_distance_threshold * .7)
-                if len(exclude_id) < self.cluster_outlier_threshold:
-                    yield begin_frame, end_frame, exclude_id
+                object_distances = np.array([
+                    np.hypot(*(obj_center - tar_centers.mean(axis=0)).T)
+                    for obj_center in tar_centers
+                ])
+                obj_out_idx, *_ = np.where(
+                    object_distances > self.cluster_distance_threshold
+                )
+                obj_out_idx = ([
+                    np.count_nonzero(obj_out_idx == oid)
+                    for oid in range(self.object_count)
+                ])
+                exclude_ids, *_ = np.where(obj_out_idx >= ((end - begin) // 2))
+                if len(exclude_ids) < self.cluster_outlier_threshold:
+                    yield begin_frame, end_frame, exclude_ids
 
     def dump_cluster(self):
         distance = self.get_distance
@@ -135,7 +145,7 @@ class Analysis:
             frame_ids, target_ids = np.where(target_exclude < self.interaction_distance_threshold)
             interaction_map[tid, target_ids, frame_ids] = 1
 
-            best_sample_idx = target_exclude.argsort(axis=-1)[:, :self.analysis_best_count]
+            best_sample_idx = (-target_exclude).argsort(axis=-1)[:, :self.analysis_best_count]
             best_samples = target_exclude[np.unravel_index(best_sample_idx, target_exclude.shape)]
             best_columns = [f"top-{bid + 1:02d}" for bid in range(self.analysis_best_count)]
 
@@ -146,7 +156,14 @@ class Analysis:
             distance_df = pd.DataFrame(
                 np.concatenate(
                     (
-                        np.expand_dims(np.arange(self.frame_count), axis=-1),
+                        np.expand_dims(
+                            np.arange(self.frame_count) * self.step + self.skip,
+                            axis=-1,
+                        ),
+                        np.expand_dims(
+                            (np.arange(self.frame_count) * self.step + self.skip) / self.fps,
+                            axis=-1,
+                        ),
                         self.centers[tid],
                         target,
                         np.expand_dims(target.mean(axis=-1), axis=-1),
@@ -160,6 +177,7 @@ class Analysis:
                 ),
                 columns=[
                     "frame",
+                    "seconds",
                     "x", "y",
                     *[f"fly-{obj_idx+1:02d}" for obj_idx in range(self.object_count)],
                     "mean", "std",
@@ -169,6 +187,7 @@ class Analysis:
                 ],
             )
             distance_df.loc[:, best_columns] = 'fly-' + (distance_df.loc[:, best_columns] + 1).astype(int).astype(str)
+
             distance_df.to_csv(str(self.base.joinpath('distances', f'fly-{tid+1:02d}.csv')))
             distance_dfs.append(distance_df)
 
@@ -243,7 +262,7 @@ class Analysis:
 
             tar_path.joinpath('distances').mkdir(exist_ok=True, parents=True)
             for oid, distance_df in enumerate(distance_dfs):
-                df = distance_df[(begin <= distance_df.frame) & (distance_df.frame < end)]
+                df = distance_df[(begin*self.step + self.skip <= distance_df.frame) & (distance_df.frame < end*self.step + self.skip)]
                 df.to_csv(str(tar_path.joinpath('distances', f'fly-{oid+1:02d}.csv')))
 
     def to_time(self, frame):
@@ -481,7 +500,7 @@ class Analysis:
                         size=14,
                     ),
                     name=f'frame{int(frame_idx):02d}',
-                    text=frame['obj'],
+                    text=frame['obj'] + 1,
                     textposition="top right",
                     textfont=dict(
                         size=22,

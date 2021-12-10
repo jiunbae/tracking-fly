@@ -37,6 +37,8 @@ def refine(
         if len(tracks) != gt_count:
             Warning(f"{len(tracks)} {gt_count} mismatch")
 
+    total = max(total, *[len(track["bboxes"]) for track in tracks])
+
     for track in tracks:
         if len(track['bboxes']) != total:
             first_frame = track['bboxes'][0]

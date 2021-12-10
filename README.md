@@ -3,9 +3,17 @@
 ## Install
 
 - [홈페이지](https://docs.conda.io/en/latest/miniconda.html)에서 `Miniconda3 Windows 64-bit` 설치
-- 설치할 때 기본설정으로 하되, Advanced Options에서 Add Miniconda3 to my PATH environment variable를 선택하여 설치하면 된다.
-- 설치한 후에 cmd 혹은 Windows terminal등을 열어서 `where conda`할때 경로가 출력되어야합니다.
-- 설치한 후에 `python --version` 을 입력해서 파이썬 버전도 확인합니다.
+  - 설치할 때 기본설정으로 하되, Advanced Options에서 Add Miniconda3 to my PATH environment variable를 선택하여 설치하면 된다.
+  - 설치한 후에 cmd 혹은 Windows terminal등을 열어서 `where conda`할때 경로가 출력되어야합니다.
+  - 설치한 후에 `python --version` 을 입력해서 파이썬 버전도 확인합니다.
+- GPU 가속 준비하기
+  - 그래픽 드라이버 최신 설치
+  - CUDA 드라이버 설치
+  - CUDNN 설치
+  - [블로그 글](https://velog.io/@xdfc1745/CUDA-CuDNN-%EC%84%A4%EC%B9%98) 등을 참조하세요
+- 디팬던시 설치
+  - cmd창에서 `pip install -r requirements.txt` 를 입력하여 설치.
+  - cmd에서 cd를 통해서 작업 디렉토리로 와야합니다. (`main.py`, `requirements.txt`등이 있는 폴더)
 
 - 데이터셋 준비
     - data
@@ -17,7 +25,6 @@
 
 ```
 python main.py --data {데이터경로}
-
 ```
 
 - 확장자가 .mp4가 아닐경우 `--ext avi`처럼 바꿀수있습니다.
