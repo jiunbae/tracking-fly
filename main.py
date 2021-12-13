@@ -45,6 +45,9 @@ def main(args: argparse.Namespace):
 
     progress = tqdm(videos := sorted(video_dir.glob(f'*{args.ext}')))
     for video in progress:
+        if args.file and not (video.name == args.file or video.stem == args.file):
+            continue
+
         progress.set_description(f'{video.stem}')
         gt_count = gt.get(video.stem, 0)
 
@@ -199,6 +202,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--data', type=str, default='./data',
                         help="Path to dataset directory")
+    parser.add_argument('--file', type=str, default='',
+                        help="specific file name with extension")
+
     parser.add_argument('--ext', type=str, default='.mp4')
     parser.add_argument('--skip', type=float, default=60.,
                         help="Skip first {skip} frames (seconds)")

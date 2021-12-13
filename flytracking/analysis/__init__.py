@@ -301,6 +301,8 @@ class Analysis:
             width=1500,
             height=1000,
             margin=dict(l=20, r=20, t=20, b=20),
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
         )
 
         fig.add_trace(
@@ -345,6 +347,8 @@ class Analysis:
             width=1060,
             height=1111,
             margin=dict(l=20, r=20, t=20, b=20),
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
         )
 
         for idx in range(distance.shape[-1]):
@@ -404,6 +408,8 @@ class Analysis:
             width=1060,
             height=1111,
             margin=dict(l=20, r=20, t=20, b=20),
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
         )
 
         begin = int(df.frame.values[0])
@@ -483,6 +489,8 @@ class Analysis:
             width=1004,
             height=1050,
             margin=dict(l=20, r=20, t=20, b=20),
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
         )
         # fig.update_traces(
         #     textposition='outside',
@@ -553,6 +561,8 @@ class Analysis:
             width=1145,
             height=1000,
             margin=dict(l=20, r=20, t=20, b=20),
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
         )
 
         for obj_idx, frame in self.df.groupby(['obj']):
@@ -615,6 +625,8 @@ class Analysis:
             xaxis3=dict(domain=[.0, 1.], showgrid=False, zeroline=False),
             yaxis3=dict(domain=[.0, .05], showgrid=False, zeroline=False),
             bargap=0,
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
         )
 
         for _, frame in df.groupby(['frame']):
