@@ -198,7 +198,8 @@ class Analysis:
         clusters_to_frame_diff = np.diff(clusters_to_frame, axis=-1)
         clusters_to_time = np.around(self.to_time(clusters), 2)
         clusters_to_time_diff = np.diff(clusters_to_time, axis=-1)
-        interaction_counts = np.zeros((len(clusters), 1))
+        interaction_counts = np.empty(len(clusters), dtype=int)
+        interaction_count_by_cluster = np.empty((len(clusters), self.object_count), dtype=int)
 
         for cid, (begin, end) in enumerate(clusters):
             cluster_distance = distance[:, :, begin:end]
@@ -217,7 +218,8 @@ class Analysis:
                 )
 
             interaction_count = np.diff(interaction_map[..., begin:end]).sum(axis=-1)
-            interaction_counts[cid][0] += int(interaction_count.sum() / 2)
+            interaction_counts[cid] = int(interaction_count.sum() / 2)
+            interaction_count_by_cluster[cid] = interaction_count.sum(axis=-1)
 
         df = pd.DataFrame(
             np.concatenate(
@@ -226,7 +228,8 @@ class Analysis:
                     clusters_to_frame_diff,
                     clusters_to_time,
                     clusters_to_time_diff,
-                    interaction_counts
+                    np.expand_dims(interaction_counts, axis=-1),
+                    interaction_count_by_cluster,
                 ),
                 axis=1,
             ),
@@ -234,6 +237,7 @@ class Analysis:
                 'begin(frame)', 'end(frame)', 'diff(frame)',
                 'begin(time)', 'end(time)', 'diff(time)',
                 'interaction counts',
+                *[f"fly-{obj_idx+1:02d}" for obj_idx in range(self.object_count)],
             ],
         )
         df.to_csv(str(self.base.joinpath('cluster.csv')), index=True)
