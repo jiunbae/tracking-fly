@@ -45,6 +45,8 @@ def main(args: argparse.Namespace):
 
     progress = tqdm(videos := sorted(video_dir.glob(f'*{args.ext}')))
     for video in progress:
+        if video.stem == "DGRP73-1":
+            continue
         if args.file and not (video.name == args.file or video.stem == args.file):
             continue
 
@@ -175,27 +177,30 @@ def main(args: argparse.Namespace):
             step=args.refine_step,
             total=round((frame_count - skip) / args.step),
         )
-        
-        analysis = Analysis(
-            refined_tracks,
-            base_dir=dump_analysis_dir,
-            cluster_distance_threshold=args.cluster_distance_threshold,
-            cluster_time_threshold=int((fps * args.cluster_time_threshold) / (args.step * args.refine_step)),
-            cluster_outlier_threshold=args.cluster_outlier_threshold,
-            interaction_step=args.interaction_step,
-            interaction_distance_threshold=args.interaction_distance_threshold,
-            analysis_best_count=args.analysis_best_count,
 
-            color_density=args.color_density,
+        try:
+            analysis = Analysis(
+                refined_tracks,
+                base_dir=dump_analysis_dir,
+                cluster_distance_threshold=args.cluster_distance_threshold,
+                cluster_time_threshold=int((fps * args.cluster_time_threshold) / (args.step * args.refine_step)),
+                cluster_outlier_threshold=args.cluster_outlier_threshold,
+                interaction_step=args.interaction_step,
+                interaction_distance_threshold=args.interaction_distance_threshold,
+                analysis_best_count=args.analysis_best_count,
 
-            width=args.width,
-            height=args.height,
-            skip=skip,
-            step=args.step * args.refine_step,
-            fps=fps,
-        )
-        analysis.draw_tracks()
-        analysis.dump_cluster()
+                color_density=args.color_density,
+
+                width=args.width,
+                height=args.height,
+                skip=skip,
+                step=args.step * args.refine_step,
+                fps=fps,
+            )
+            analysis.draw_tracks()
+            analysis.dump_cluster()
+        except Exception as e:
+            print(e)
 
 
 if __name__ == "__main__":
