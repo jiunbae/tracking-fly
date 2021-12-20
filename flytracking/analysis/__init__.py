@@ -93,7 +93,10 @@ class Analysis:
         flags, *_ = np.where(diff != 1)
 
         if len(flags) == 0:
-            return
+            if np.all(distance < self.cluster_distance_threshold):
+                flags = np.array([diff.size - 1])
+            else:
+                return
 
         for begin, end in zip(
             [0, *(flags + 1)],
@@ -191,7 +194,10 @@ class Analysis:
             distance_df.to_csv(str(self.base.joinpath('distances', f'fly-{tid+1:02d}.csv')))
             distance_dfs.append(distance_df)
 
-        *clusters, exc_ids = zip(*self.get_cluster())
+        try:
+            *clusters, exc_ids = zip(*self.get_cluster())
+        except:
+            raise RuntimeError("No cluster found!")
         clusters = tuple(zip(*clusters))
         clusters = np.array(clusters) if len(clusters) else np.empty((0, 2))
         clusters_to_frame = clusters * self.step
