@@ -3,3 +3,8 @@ plotly
 numpy
 pandas
 opencv-python
+kaleido
+plotly
+numpy
+pandas
+opencv-python

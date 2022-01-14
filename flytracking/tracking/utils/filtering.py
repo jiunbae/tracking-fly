@@ -73,7 +73,7 @@ def refine(
 
     if gt_count != 0:
         if len(tracks) > gt_count:
-            idx = scores[:gt_count]
+            idx = scores.argsort()[:gt_count]
             tracks = [
                 track
                 for i, track in enumerate(tracks)
