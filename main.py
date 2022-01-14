@@ -172,6 +172,7 @@ def main(args: argparse.Namespace):
 
             refined_tracks = filtering.refine(
                 tracks,
+                image_path=dump_image_dir,
                 gt_count=gt_count,
                 step=args.refine_step,
                 total=round((frame_count - skip) / args.step),
